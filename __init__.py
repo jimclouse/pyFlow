@@ -40,8 +40,10 @@ class Step():
         self.name = name
         self.action = action
         self.args = args
+        self.depends = []  # dependency list, order independent
 
     def _execute(self):
+        self._runDependencies()
         try:
             print "running " + str(self.action.__name__)
             if self.args is None:
@@ -50,6 +52,26 @@ class Step():
                 self.action(self.args)
         except Exception as e:
             raise Exception("Encountered an error running step %s. %s" % (self.name, str(e),))
+
+    def addDependency(self, step):
+        self.depends.append(step)
+
+    def getDependencies(self, dependencyRunList):
+        """ recursive method to build the depnendency list
+            * currently not used  - maybe will be removed *
+        """
+        if len(self.depends) > 0:
+            for _step in self.depends:
+                _step.getDependencies(dependencyRunList + self.depends)
+        else:
+            return dependencyRunList
+
+    def _runDependencies(self):
+        """ run the dependencies for the given step in order of earliest dependency first
+        """
+        if len(self.depends) > 0:
+            for _step in self.depends:
+                _step._execute()
 
     def run(self):
         self._execute()
